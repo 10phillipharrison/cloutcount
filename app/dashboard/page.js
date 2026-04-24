@@ -27,7 +27,6 @@ export default function Dashboard() {
   const [socials, setSocials] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('all')
-  const [updating, setUpdating] = useState(false)
 
   useEffect(() => {
     async function loadData() {
@@ -46,28 +45,6 @@ export default function Dashboard() {
   async function handleSignOut() {
     await supabase.auth.signOut()
     router.push('/')
-  }
-
-  async function updateScore() {
-    setUpdating(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    const response = await fetch('/api/calculate-score', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: user.id })
-    })
-    const data = await response.json()
-    if (data.score !== undefined) {
-      setProfile(prev => ({
-        ...prev,
-        cloutcount_score: data.score,
-        world_rank: data.world_rank,
-        country_rank: data.country_rank,
-        state_rank: data.state_rank,
-        city_rank: data.city_rank,
-      }))
-    }
-    setUpdating(false)
   }
 
   if (loading) return (
@@ -202,9 +179,7 @@ export default function Dashboard() {
         <div style={{ height: '0.5px', background: 'var(--cc-border)', margin: '16px 0' }}></div>
         <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--cc-gold)', marginBottom: '10px' }}>Quick Actions</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-          <button onClick={updateScore} disabled={updating} style={{ background: updating ? 'rgba(245,200,66,0.5)' : 'var(--cc-gold)', color: 'var(--cc-black)', border: 'none', borderRadius: 'var(--cc-radius-sm)', fontFamily: 'var(--font-display)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', padding: '13px 10px', cursor: updating ? 'not-allowed' : 'pointer' }}>
-            {updating ? 'Updating...' : 'Update My Score'}
-          </button>
+          <Link href="/update-followers" style={{ display: 'block', textAlign: 'center', background: 'var(--cc-gold)', color: 'var(--cc-black)', border: 'none', borderRadius: 'var(--cc-radius-sm)', fontFamily: 'var(--font-display)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', padding: '13px 10px' }}>Update My Score</Link>
           <Link href="/leaderboard" style={{ display: 'block', textAlign: 'center', background: 'var(--cc-card)', border: '0.5px solid var(--cc-border)', borderRadius: 'var(--cc-radius-sm)', color: 'var(--cc-white)', fontFamily: 'var(--font-display)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', padding: '13px 10px' }}>View Leaderboard</Link>
           <Link href="/settings" style={{ display: 'block', textAlign: 'center', background: 'var(--cc-card)', border: '0.5px solid var(--cc-border)', borderRadius: 'var(--cc-radius-sm)', color: 'var(--cc-white)', fontFamily: 'var(--font-display)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', padding: '13px 10px' }}>Edit Profile</Link>
           <Link href="/billing" style={{ display: 'block', textAlign: 'center', background: 'var(--cc-card)', border: '0.5px solid var(--cc-border)', borderRadius: 'var(--cc-radius-sm)', color: 'var(--cc-white)', fontFamily: 'var(--font-display)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', padding: '13px 10px' }}>Upgrade Plan</Link>

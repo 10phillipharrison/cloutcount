@@ -47,7 +47,7 @@ export default function Setup() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login'); return }
 
-    const { error: profileError } = await supabase.from('profiles').insert({
+    const { error: profileError } = await supabase.from('profiles').upsert({
       id: user.id,
       display_name: displayName,
       username: username.replace('@', '').toLowerCase(),
