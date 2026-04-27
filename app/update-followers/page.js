@@ -11,6 +11,9 @@ const platformColors = {
   Substack: '#FF6719', Spotify: '#1DB954', 'Apple Podcasts': '#FC3C44'
 }
 
+// Platforms that support auto-sync (we'll add more later)
+const autoSyncPlatforms = ['YouTube']
+
 export default function UpdateFollowers() {
   const router = useRouter()
   const [socials, setSocials] = useState([])
@@ -19,6 +22,8 @@ export default function UpdateFollowers() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+  const [syncing, setSyncing] = useState({}) // tracks which platform is syncing
+  const [syncMessage, setSyncMessage] = useState('')
 
   useEffect(() => {
     async function loadSocials() {
@@ -40,6 +45,40 @@ export default function UpdateFollowers() {
     }
     loadSocials()
   }, [router])
+
+  async function handleAutoSync(social) {
+    setSyncing(prev => ({ ...prev, [social.id]: true }))
+    setSyncMessage('')
+    setError('')
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      const response = await fetch('/api/sync/youtube', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id })
+      })
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error || 'Sync failed')
+        setSyncing(prev => ({ ...prev, [social.id]: false }))
+        return
+      }
+
+      // Update the local state with the synced count
+      setFollowers(prev => ({ ...prev, [social.id]: data.followers }))
+      setSocials(prev => prev.map(s =>
+        s.id === social.id ? { ...s, followers: data.followers } : s
+      ))
+      setSyncMessage(`✓ ${social.platform} synced — ${data.followers.toLocaleString()} subscribers`)
+      setTimeout(() => setSyncMessage(''), 4000)
+    } catch (err) {
+      setError('Network error. Please try again.')
+    }
+
+    setSyncing(prev => ({ ...prev, [social.id]: false }))
+  }
 
   async function handleSave() {
     setSaving(true)
@@ -82,6 +121,21 @@ export default function UpdateFollowers() {
     fontWeight: 700,
   }
 
+  const syncBtn = {
+    background: 'transparent',
+    border: '0.5px solid var(--cc-gold-border)',
+    borderRadius: 'var(--cc-radius-pill)',
+    color: 'var(--cc-gold)',
+    fontFamily: 'var(--font-display)',
+    fontSize: '10px',
+    fontWeight: 700,
+    padding: '6px 10px',
+    letterSpacing: '0.05em',
+    textTransform: 'uppercase',
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+  }
+
   if (loading) return (
     <div style={{ background: 'var(--cc-black)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ fontFamily: 'var(--font-display)', color: 'var(--cc-gold)', fontSize: '16px' }}>Loading your socials...</div>
@@ -110,6 +164,10 @@ export default function UpdateFollowers() {
           <div style={{ background: 'var(--cc-red-dim)', border: '0.5px solid rgba(255,82,82,0.3)', borderRadius: 'var(--cc-radius-sm)', padding: '10px 14px', fontSize: '12px', color: 'var(--cc-red)', marginBottom: '16px' }}>{error}</div>
         )}
 
+        {syncMessage && (
+          <div style={{ background: 'var(--cc-green-dim)', border: '0.5px solid rgba(46,204,138,0.3)', borderRadius: 'var(--cc-radius-sm)', padding: '10px 14px', fontSize: '12px', color: '#2ECC8A', marginBottom: '16px' }}>{syncMessage}</div>
+        )}
+
         {socials.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 20px', background: 'var(--cc-card)', border: '0.5px solid var(--cc-border)', borderRadius: 'var(--cc-radius)' }}>
             <div style={{ fontSize: '28px', marginBottom: '12px' }}>📱</div>
@@ -125,18 +183,32 @@ export default function UpdateFollowers() {
                 <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: '10px' }}>Free Platforms — 1 pt per follower</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
                   {socials.filter(s => !s.is_paid).map(s => (
-                    <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--cc-card)', border: '0.5px solid var(--cc-border)', borderRadius: 'var(--cc-radius-sm)', padding: '12px 14px' }}>
-                      <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: platformColors[s.platform] || '#fff', display: 'inline-block', flexShrink: 0 }}></span>
-                      <span style={{ fontSize: '13px', fontWeight: 500, flex: 1 }}>{s.platform}</span>
-                      <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 6px', borderRadius: 'var(--cc-radius-pill)', background: 'var(--cc-surface)', color: 'var(--cc-muted)', border: '0.5px solid var(--cc-border)', marginRight: '4px' }}>1×</span>
-                      <input
-                        style={input}
-                        type="number"
-                        min="0"
-                        placeholder="0"
-                        value={followers[s.id] || ''}
-                        onChange={e => setFollowers(prev => ({ ...prev, [s.id]: e.target.value }))}
-                      />
+                    <div key={s.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'var(--cc-card)', border: '0.5px solid var(--cc-border)', borderRadius: 'var(--cc-radius-sm)', padding: '12px 14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: platformColors[s.platform] || '#fff', display: 'inline-block', flexShrink: 0 }}></span>
+                        <span style={{ fontSize: '13px', fontWeight: 500, flex: 1 }}>{s.platform}</span>
+                        <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 6px', borderRadius: 'var(--cc-radius-pill)', background: 'var(--cc-surface)', color: 'var(--cc-muted)', border: '0.5px solid var(--cc-border)', marginRight: '4px' }}>1×</span>
+                        <input
+                          style={input}
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={followers[s.id] || ''}
+                          onChange={e => setFollowers(prev => ({ ...prev, [s.id]: e.target.value }))}
+                        />
+                      </div>
+                      {autoSyncPlatforms.includes(s.platform) && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
+                          <span style={{ fontSize: '10px', color: 'var(--cc-muted)' }}>or pull from {s.platform}</span>
+                          <button
+                            onClick={() => handleAutoSync(s)}
+                            disabled={syncing[s.id]}
+                            style={{ ...syncBtn, opacity: syncing[s.id] ? 0.5 : 1, cursor: syncing[s.id] ? 'not-allowed' : 'pointer' }}
+                          >
+                            {syncing[s.id] ? 'Syncing...' : '⟳ Auto-Sync'}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
