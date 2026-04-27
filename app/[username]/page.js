@@ -12,8 +12,7 @@ const platformColors = {
 
 // Server-side data fetch (runs on Vercel, not in browser — fast & SEO-friendly)
 async function getProfile(username) {
-  // Strip @ if it somehow got included, and reject empty usernames
-  const cleanUsername = username.replace(/^@/, '').toLowerCase().trim()
+  const cleanUsername = username.toLowerCase().trim()
   if (!cleanUsername) return null
 
   const supabase = createClient(
@@ -59,7 +58,7 @@ export async function generateMetadata({ params }) {
       title,
       description,
       type: 'profile',
-      url: `https://cloutcount.com/@${profile.username}`,
+      url: `https://cloutcount.com/${profile.username}`,
     },
     twitter: {
       card: 'summary_large_image',

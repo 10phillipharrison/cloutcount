@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 export default function ProfileClient({ profile }) {
   const [copied, setCopied] = useState(false)
-  const profileUrl = `https://cloutcount.com/@${profile.username}`
+  const profileUrl = `https://cloutcount.com/${profile.username}`
   const shareText = `Check out ${profile.display_name}'s CloutCount Score: ${(profile.cloutcount_score || 0).toLocaleString()}`
 
   async function copyLink() {
