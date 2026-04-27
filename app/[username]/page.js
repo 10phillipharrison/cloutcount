@@ -91,6 +91,19 @@ export default async function PublicProfile({ params }) {
     return n.toLocaleString() + (s[(v - 20) % 10] || s[v] || s[0])
   }
 
+  // Score sizing: scales smartly so big numbers fit on one line
+  // up to 6 chars (e.g. "12,500"): 48px
+  // 7-9 chars (e.g. "1,250,000"): 40px
+  // 10-11 chars (e.g. "821,000,000"): 34px
+  // 12+ chars (1B+ scores): 28px
+  const scoreFormatted = (profile.cloutcount_score || 0).toLocaleString()
+  const scoreLength = scoreFormatted.length
+  const scoreFontSize =
+    scoreLength <= 6 ? '48px' :
+    scoreLength <= 9 ? '40px' :
+    scoreLength <= 11 ? '34px' :
+    '28px'
+
   return (
     <div style={{ background: 'var(--cc-black)', minHeight: '100vh', color: 'var(--cc-white)', paddingBottom: '40px' }}>
 
@@ -142,8 +155,8 @@ export default async function PublicProfile({ params }) {
             <div style={{ background: 'var(--cc-card)', border: '0.5px solid var(--cc-border)', borderRadius: 'var(--cc-radius)', padding: '24px 20px', marginBottom: '20px', position: 'relative', overflow: 'hidden', textAlign: 'center' }}>
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'var(--cc-gold)' }}></div>
               <div style={{ fontSize: '10px', color: 'var(--cc-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px', fontWeight: 700 }}>CloutCount Score</div>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, color: 'var(--cc-gold)', lineHeight: 1, marginBottom: '10px', letterSpacing: '-0.02em', fontSize: 'clamp(28px, 11vw, 52px)', wordBreak: 'break-all' }}>
-                {(profile.cloutcount_score || 0).toLocaleString()}
+              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, color: 'var(--cc-gold)', lineHeight: 1, marginBottom: '10px', letterSpacing: '-0.02em', fontSize: scoreFontSize, whiteSpace: 'nowrap' }}>
+                {scoreFormatted}
               </div>
               <div style={{ display: 'inline-flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
                 {profile.world_rank && (
