@@ -142,7 +142,7 @@ export default async function PublicProfile({ params }) {
             <div style={{ background: 'var(--cc-card)', border: '0.5px solid var(--cc-border)', borderRadius: 'var(--cc-radius)', padding: '24px 20px', marginBottom: '20px', position: 'relative', overflow: 'hidden', textAlign: 'center' }}>
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'var(--cc-gold)' }}></div>
               <div style={{ fontSize: '10px', color: 'var(--cc-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px', fontWeight: 700 }}>CloutCount Score</div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: '52px', fontWeight: 800, color: 'var(--cc-gold)', lineHeight: 1, marginBottom: '10px', letterSpacing: '-0.02em' }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, color: 'var(--cc-gold)', lineHeight: 1, marginBottom: '10px', letterSpacing: '-0.02em', fontSize: 'clamp(28px, 11vw, 52px)', wordBreak: 'break-all' }}>
                 {(profile.cloutcount_score || 0).toLocaleString()}
               </div>
               <div style={{ display: 'inline-flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
